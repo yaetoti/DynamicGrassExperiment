@@ -1,0 +1,92 @@
+#pragma kernel GrassInit
+
+struct SurfaceSample {
+  float3 position;
+  float3 normal;
+};
+
+// Input
+StructuredBuffer<float3> vertices;
+StructuredBuffer<float3> normals;
+StructuredBuffer<int> indices;
+StructuredBuffer<float> cdf;
+uint numTriangles;
+uint seed;
+float4x4 transform;
+
+// Output
+RWStructuredBuffer<SurfaceSample> samples;
+
+
+
+// === Code ===
+
+uint Rand(uint s) {
+  s ^= 2747636419u;
+  s *= 2654435769u;
+  s ^= s >> 16;
+  s *= 2654435769u;
+  s ^= s >> 16;
+  s *= 2654435769u;
+  return s;
+}
+
+float Rand01(uint s) {
+  return Rand(s) / 4294967296.0f;
+}
+
+float3 RandomBarycentric(uint r1, uint r2) {
+  float u = Rand01(r1);
+  float v = Rand01(r2);
+  
+  if (u + v > 1.0) {
+    u = 1.0 - u;
+    v = 1.0 - v;
+  }
+  
+  return float3(u, v, 1.0 - u - v);
+}
+
+uint FindTriangle(float value) {
+  uint low = 0;
+  uint high = numTriangles - 1;
+  
+  while (low < high) {
+    uint mid = (low + high) / 2;
+    if (value <= cdf[mid]) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  
+  return low;
+}
+
+[numthreads(1024, 1, 1)]
+void GrassInit(uint3 id : SV_DispatchThreadID) {
+  float cdfThreshold = Rand01(id.x * 17 + seed);
+  uint triangleId = FindTriangle(cdfThreshold);
+  
+  int i0 = indices[triangleId * 3 + 0];
+  int i1 = indices[triangleId * 3 + 1];
+  int i2 = indices[triangleId * 3 + 2];
+  
+  float3 v0 = vertices[i0];
+  float3 v1 = vertices[i1];
+  float3 v2 = vertices[i2];
+  
+  float3 n0 = normals[i0];
+  float3 n1 = normals[i1];
+  float3 n2 = normals[i2];
+  
+  float3 coords = RandomBarycentric(id.x * 31 + seed, id.x * 53 + seed);
+  
+  float3 position = v0 * coords.x + v1 * coords.y + v2 * coords.z;
+  float3 normal = normalize(n0 * coords.x + n1 * coords.y + n2 * coords.z);
+  
+  SurfaceSample result;
+  result.position = mul(transform, float4(position, 1.0f)).xyz;
+  result.normal = normalize(mul(transform, float4(normal, 0.0f)).xyz);
+  samples[id.x] = result;
+}
