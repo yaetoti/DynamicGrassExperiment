@@ -1,15 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class Grass : MonoBehaviour {
   struct SurfaceSample {
     public Vector3 position;
     public Vector3 normal;
+    public Vector3 tangent;
   }
 
+  public int numGrass = 10000;
   public MeshFilter surfaceMeshFilter;
   public ComputeShader shader;
   public Material material;
@@ -19,9 +19,8 @@ public class Grass : MonoBehaviour {
   private ComputeBuffer m_samplesBuffer;
   private List<Vector3> m_vertices;
   private List<Vector3> m_normals;
+  private List<Vector4> m_tangents;
   private List<int> m_indices;
-  
-  private const int numGrass = 1_000_000;
 
   private RenderParams renderParams;
 
@@ -43,6 +42,7 @@ public class Grass : MonoBehaviour {
     // Collect data
     m_vertices = new();
     m_normals = new();
+    m_tangents = new();
     m_indices = new();
 
     var surfaceMesh = surfaceMeshFilter.mesh;
@@ -51,6 +51,7 @@ public class Grass : MonoBehaviour {
     surfaceMesh.GetVertices(m_vertices);
     surfaceMesh.GetNormals(m_normals);
     surfaceMesh.GetTriangles(m_indices, 0);
+    surfaceMesh.GetTangents(m_tangents);
 
     // Calculate areas
     int numTriangles = m_indices.Count / 3;
@@ -75,17 +76,17 @@ public class Grass : MonoBehaviour {
         cdf[i] += cdf[i - 1];
       }
     }
-    
-    // Run Compute Shader to calculate positions
 
     // Create buffers
     var vertexBuffer = new ComputeBuffer(m_vertices.Count, Marshal.SizeOf<Vector3>());
     var normalBuffer = new ComputeBuffer(m_normals.Count, Marshal.SizeOf<Vector3>());
+    var tangentsBuffer = new ComputeBuffer(m_tangents.Count, Marshal.SizeOf<Vector4>());
     var indexBuffer = new ComputeBuffer(m_indices.Count, sizeof(int));
     var cdfBuffer = new ComputeBuffer(cdf.Length, sizeof(float));
     
     vertexBuffer.SetData(m_vertices);
     normalBuffer.SetData(m_normals);
+    tangentsBuffer.SetData(m_tangents);
     indexBuffer.SetData(m_indices);
     cdfBuffer.SetData(cdf);
     
@@ -93,6 +94,7 @@ public class Grass : MonoBehaviour {
     int kernel = shader.FindKernel("GrassInit");
     shader.SetBuffer(kernel, "vertices", vertexBuffer);
     shader.SetBuffer(kernel, "normals", normalBuffer);
+    shader.SetBuffer(kernel, "tangents", tangentsBuffer);
     shader.SetBuffer(kernel, "indices", indexBuffer);
     shader.SetBuffer(kernel, "cdf", cdfBuffer);
     shader.SetInt("numTriangles", numTriangles);
@@ -108,6 +110,7 @@ public class Grass : MonoBehaviour {
     // Dispose
     vertexBuffer.Dispose();
     normalBuffer.Dispose();
+    tangentsBuffer.Dispose();
     indexBuffer.Dispose();
     cdfBuffer.Dispose();
     

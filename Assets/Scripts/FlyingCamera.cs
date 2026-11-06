@@ -45,7 +45,7 @@ public class FlyingCamera : MonoBehaviour {
 
   private void HandleMovement() {
     float currentSpeed = moveSpeed;
-    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) {
+    if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) {
       currentSpeed *= sprintMultiplier;
     }
 
@@ -57,7 +57,7 @@ public class FlyingCamera : MonoBehaviour {
     if (Input.GetKey(KeyCode.A)) moveDirection -= transform.right;
 
     if (Input.GetKey(KeyCode.Space)) moveDirection += transform.up;
-    if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) moveDirection -= transform.up;
+    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) moveDirection -= transform.up;
 
     if (moveDirection.sqrMagnitude > 1f) {
       moveDirection.Normalize();

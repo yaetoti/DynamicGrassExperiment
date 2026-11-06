@@ -1,13 +1,17 @@
 #pragma kernel GrassInit
 
+static const float PI = 3.1415926535897f;
+
 struct SurfaceSample {
   float3 position;
   float3 normal;
+  float3 tangent;
 };
 
 // Input
 StructuredBuffer<float3> vertices;
 StructuredBuffer<float3> normals;
+StructuredBuffer<float4> tangents;
 StructuredBuffer<int> indices;
 StructuredBuffer<float> cdf;
 uint numTriangles;
@@ -63,11 +67,20 @@ uint FindTriangle(float value) {
   return low;
 }
 
+float3 RotateAround(float3 v, float3 axis, float angle) {
+  // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+  float s = sin(angle);
+  float c = cos(angle);
+  return v * c + cross(axis, v) * s + axis * (dot(axis, v) * (1 - c));
+}
+
 [numthreads(1024, 1, 1)]
 void GrassInit(uint3 id : SV_DispatchThreadID) {
+  // Get triangle
   float cdfThreshold = Rand01(id.x * 17 + seed);
   uint triangleId = FindTriangle(cdfThreshold);
   
+  // Get geometry elements
   int i0 = indices[triangleId * 3 + 0];
   int i1 = indices[triangleId * 3 + 1];
   int i2 = indices[triangleId * 3 + 2];
@@ -80,13 +93,23 @@ void GrassInit(uint3 id : SV_DispatchThreadID) {
   float3 n1 = normals[i1];
   float3 n2 = normals[i2];
   
-  float3 coords = RandomBarycentric(id.x * 31 + seed, id.x * 53 + seed);
+  float3 t0 = tangents[i0];
+  float3 t1 = tangents[i1];
+  float3 t2 = tangents[i2];
   
+  // Interpolate
+  float3 coords = RandomBarycentric(id.x * 31 + seed, id.x * 43 + seed);
   float3 position = v0 * coords.x + v1 * coords.y + v2 * coords.z;
   float3 normal = normalize(n0 * coords.x + n1 * coords.y + n2 * coords.z);
+  float3 tangent = normalize(t0 * coords.x + t1 * coords.y + t2 * coords.z);
+  
+  // Transform
+  float yaw = Rand01(id.x * 53 + seed) * 2 * PI;
   
   SurfaceSample result;
   result.position = mul(transform, float4(position, 1.0f)).xyz;
   result.normal = normalize(mul(transform, float4(normal, 0.0f)).xyz);
+  result.tangent = normalize(mul(transform, float4(tangent, 0.0f)).xyz);
+  result.tangent = normalize(RotateAround(result.tangent, result.normal, yaw));
   samples[id.x] = result;
 }

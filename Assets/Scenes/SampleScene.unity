@@ -163,6 +163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c1710a40bcfbe5488934561c8ff9322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Grass
+  numGrass: 1000000
   surfaceMeshFilter: {fileID: 2065916533}
   shader: {fileID: 7200000, guid: 05cec610e9f445040a61245c07afcb75, type: 3}
   material: {fileID: 2100000, guid: 1d904b18207f97b4f85544d81b9fc1f2, type: 2}
@@ -812,6 +813,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: sphere
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a0093317d3142354786512cee7369f88, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -904,7 +909,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &2068738484
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -917,6 +922,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c1710a40bcfbe5488934561c8ff9322, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Grass
+  numGrass: 10000
   surfaceMeshFilter: {fileID: 2013837122}
   shader: {fileID: 7200000, guid: 05cec610e9f445040a61245c07afcb75, type: 3}
   material: {fileID: 2100000, guid: 1d904b18207f97b4f85544d81b9fc1f2, type: 2}
