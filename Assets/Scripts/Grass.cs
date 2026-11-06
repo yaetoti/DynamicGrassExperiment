@@ -97,6 +97,7 @@ public class Grass : MonoBehaviour {
     shader.SetBuffer(kernel, "tangents", tangentsBuffer);
     shader.SetBuffer(kernel, "indices", indexBuffer);
     shader.SetBuffer(kernel, "cdf", cdfBuffer);
+    shader.SetInt("numInstances", numGrass);
     shader.SetInt("numTriangles", numTriangles);
     shader.SetInt("seed", 0);
     shader.SetMatrix("transform", surfaceTransform.localToWorldMatrix);

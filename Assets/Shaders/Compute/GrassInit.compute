@@ -14,6 +14,7 @@ StructuredBuffer<float3> normals;
 StructuredBuffer<float4> tangents;
 StructuredBuffer<int> indices;
 StructuredBuffer<float> cdf;
+uint numInstances;
 uint numTriangles;
 uint seed;
 float4x4 transform;
@@ -76,6 +77,10 @@ float3 RotateAround(float3 v, float3 axis, float angle) {
 
 [numthreads(1024, 1, 1)]
 void GrassInit(uint3 id : SV_DispatchThreadID) {
+  if (id.x >= numInstances) {
+    return;
+  }
+  
   // Get triangle
   float cdfThreshold = Rand01(id.x * 17 + seed);
   uint triangleId = FindTriangle(cdfThreshold);
