@@ -10,6 +10,8 @@ public class Grass : MonoBehaviour {
   }
 
   public int numGrass = 10000;
+  public Camera bendCamera;
+  public RenderTexture bendTexture;
   public MeshFilter surfaceMeshFilter;
   public ComputeShader shader;
   public Material material;
@@ -26,16 +28,24 @@ public class Grass : MonoBehaviour {
 
   void Awake() {
     m_samplesBuffer = new ComputeBuffer(numGrass, Marshal.SizeOf<SurfaceSample>());
-    
-    // TODO figure out what to do with bounds. Surface mesh +- margins?
-    int extent = 100;
-    
+
+    float camHeight = bendCamera.orthographicSize * 2;
+    float camWidth = camHeight * bendCamera.aspect;
+    var worldBounds = new Vector4(
+      bendCamera.transform.position.x - camWidth / 2,
+      bendCamera.transform.position.z - camHeight / 2,
+      camWidth,
+      camHeight
+    );
+
     renderParams = new(material);
-    // renderParams.receiveShadows = true;
-    // renderParams.shadowCastingMode = ShadowCastingMode.On;
     renderParams.matProps = new();
+    // TODO figure out what to do with bounds. Surface mesh +- margins?
+    const int extent = 100;
     renderParams.worldBounds = new Bounds(new(), new(extent, extent, extent));
     renderParams.matProps.SetBuffer("samples", m_samplesBuffer);
+    renderParams.matProps.SetTexture("bendTexture", bendTexture);
+    renderParams.matProps.SetVector("worldBounds", worldBounds);
   }
   
   void Start() {
