@@ -1,3 +1,5 @@
+// TODO Warning: slop
+
 using UnityEngine;
 
 public class FlyingCamera : MonoBehaviour {
@@ -13,21 +15,53 @@ public class FlyingCamera : MonoBehaviour {
   [SerializeField]
   private float rollSpeed = 60f;
 
+  [Header("Smoothing Settings")]
+  [SerializeField]
+  private float movementSmoothness = 10f;
+  [SerializeField]
+  private float rotationSmoothness = 10f;
+
+  [Header("Speed Adjustment")]
+  [SerializeField]
+  private float minSpeed = 1f;
+  [SerializeField]
+  private float maxSpeed = 100f;
+  [SerializeField]
+  private float scrollSensitivity = 2f;
+
+  private bool isControlActive = false;
+  private Vector3 targetPosition;
+  private Quaternion targetRotation;
+
+  private void Start() {
+    targetPosition = transform.position;
+    targetRotation = transform.rotation;
+  }
+
   private void Update() {
     HandleRotation();
     HandleMovement();
+    HandleSpeedAdjustment();
+  }
+
+  private void LateUpdate() {
+    transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * movementSmoothness);
+    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSmoothness);
   }
 
   private void HandleRotation() {
-    if (Input.GetMouseButton(1)) {
+    if (Input.GetMouseButtonDown(1)) {
+      isControlActive = !isControlActive;
+    }
+
+    if (isControlActive) {
       Cursor.lockState = CursorLockMode.Locked;
       Cursor.visible = false;
 
       float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
       float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-      transform.Rotate(Vector3.up, mouseX, Space.Self);
-      transform.Rotate(Vector3.left, mouseY, Space.Self);
+      targetRotation *= Quaternion.Euler(-mouseY, mouseX, 0f);
     }
     else {
       Cursor.lockState = CursorLockMode.None;
@@ -35,11 +69,11 @@ public class FlyingCamera : MonoBehaviour {
     }
 
     if (Input.GetKey(KeyCode.Q)) {
-      transform.Rotate(Vector3.forward, rollSpeed * Time.deltaTime, Space.Self);
+      targetRotation *= Quaternion.Euler(0f, 0f, rollSpeed * Time.deltaTime);
     }
 
     if (Input.GetKey(KeyCode.E)) {
-      transform.Rotate(Vector3.back, rollSpeed * Time.deltaTime, Space.Self);
+      targetRotation *= Quaternion.Euler(0f, 0f, -rollSpeed * Time.deltaTime);
     }
   }
 
@@ -51,18 +85,26 @@ public class FlyingCamera : MonoBehaviour {
 
     Vector3 moveDirection = Vector3.zero;
 
-    if (Input.GetKey(KeyCode.W)) moveDirection += transform.forward;
-    if (Input.GetKey(KeyCode.S)) moveDirection -= transform.forward;
-    if (Input.GetKey(KeyCode.D)) moveDirection += transform.right;
-    if (Input.GetKey(KeyCode.A)) moveDirection -= transform.right;
+    if (Input.GetKey(KeyCode.W)) moveDirection += targetRotation * Vector3.forward;
+    if (Input.GetKey(KeyCode.S)) moveDirection -= targetRotation * Vector3.forward;
+    if (Input.GetKey(KeyCode.D)) moveDirection += targetRotation * Vector3.right;
+    if (Input.GetKey(KeyCode.A)) moveDirection -= targetRotation * Vector3.right;
 
-    if (Input.GetKey(KeyCode.Space)) moveDirection += transform.up;
-    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) moveDirection -= transform.up;
+    if (Input.GetKey(KeyCode.Space)) moveDirection += targetRotation * Vector3.up;
+    if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)) moveDirection -= targetRotation * Vector3.up;
 
     if (moveDirection.sqrMagnitude > 1f) {
       moveDirection.Normalize();
     }
 
-    transform.position += moveDirection * (currentSpeed * Time.deltaTime);
+    targetPosition += moveDirection * (currentSpeed * Time.deltaTime);
+  }
+
+  private void HandleSpeedAdjustment() {
+    float scrollDelta = Input.GetAxis("Mouse ScrollWheel");
+    if (scrollDelta != 0f) {
+      moveSpeed += scrollDelta * scrollSensitivity;
+      moveSpeed = Mathf.Clamp(moveSpeed, minSpeed, maxSpeed);
+    }
   }
 }
