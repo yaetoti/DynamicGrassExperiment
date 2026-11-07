@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 
 public class Grass : MonoBehaviour {
-  struct SurfaceSample {
+ private struct SurfaceSample {
     public Vector3 position;
     public Vector3 normal;
     public Vector3 tangent;
@@ -24,7 +24,7 @@ public class Grass : MonoBehaviour {
   private List<Vector4> m_tangents;
   private List<int> m_indices;
 
-  private RenderParams renderParams;
+  private RenderParams m_renderParams;
 
   void Awake() {
     m_samplesBuffer = new ComputeBuffer(numGrass, Marshal.SizeOf<SurfaceSample>());
@@ -38,14 +38,14 @@ public class Grass : MonoBehaviour {
       camHeight
     );
 
-    renderParams = new(material);
-    renderParams.matProps = new();
+    m_renderParams = new(material);
+    m_renderParams.matProps = new();
     // TODO figure out what to do with bounds. Surface mesh +- margins?
     const int extent = 100;
-    renderParams.worldBounds = new Bounds(new(), new(extent, extent, extent));
-    renderParams.matProps.SetBuffer("samples", m_samplesBuffer);
-    renderParams.matProps.SetTexture("bendTexture", bendTexture);
-    renderParams.matProps.SetVector("worldBounds", worldBounds);
+    m_renderParams.worldBounds = new Bounds(new(), new(extent, extent, extent));
+    m_renderParams.matProps.SetBuffer("samples", m_samplesBuffer);
+    m_renderParams.matProps.SetTexture("bendTexture", bendTexture);
+    m_renderParams.matProps.SetVector("worldBounds", worldBounds);
   }
   
   void Start() {
@@ -141,6 +141,10 @@ public class Grass : MonoBehaviour {
   }
 
   void Update() {
-    Graphics.RenderMeshPrimitives(renderParams, grassMesh, 0, numGrass);
+    if (Input.GetKeyDown("escape")) {
+      Application.Quit();
+    }
+    
+    Graphics.RenderMeshPrimitives(m_renderParams, grassMesh, 0, numGrass);
   }
 }
