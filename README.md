@@ -1,5 +1,7 @@
 # Dynamic Instanced Grass Rendering (Experiment)
 
+<img width="1920" height="1080" alt="Screenshot_2026-11-07_23-32-37" src="https://github.com/user-attachments/assets/d5a850b1-e9b1-43a3-9ef4-88662c752059" />
+
 ### Features
 - Instanced rendering using Graphics.RenderMeshPrimitives (1 million blades = ~180 FPS on RTX 5070 / R5 3600)
 - You can generate grass over any mesh. Generation is hapening in a compute shader only once, the buffer stays on GPU. Surface basis is taken into account (grass blades are always directed towards the surface normal)
@@ -22,3 +24,15 @@
 - Currently grass bending does not take into account character altitude, so grass bends even if the character is in the air
 - I wanna try adding grass cutting and particles. This will most likely require using another compute shader to identify the newly mowed grass and fill the position buffer. Since there is a lot of grass, I could randomly select like every tenth blade
 - I saw people doing wind direction field using perlin noise. Would be interesting to figure out how that works.
+
+### Media
+
+**Wind sway**
+
+https://github.com/user-attachments/assets/e76b3d98-4b8b-4c82-9cf5-7e69edfcd463
+
+**Grass is bending under player**
+
+https://github.com/user-attachments/assets/a8477123-218f-44f3-8434-be22086134a3
+
+
